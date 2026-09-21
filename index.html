@@ -140,6 +140,31 @@
     .field { flex-direction: row; }
     .field input, .field select { width: 110px; }
   }
+  @media print {
+    body { padding: 8px 12px; background: #fff; }
+    .wrap { max-width: 100%; }
+    h1 { font-size: 1.15rem; margin-bottom: 2px; }
+    p.sub { margin-bottom: 12px; font-size: 0.8rem; }
+    .card {
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .card h2 { margin-bottom: 8px; font-size: 0.75rem; }
+    .field { margin-bottom: 6px; }
+    .field .hint { font-size: 0.7rem; }
+    .breakdown-row { padding: 3px 0; font-size: 0.85rem; }
+    .breakdown-row.subtotal { padding-top: 6px; margin-top: 3px; }
+    .total-card {
+      padding: 12px 14px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .total-card .amount { font-size: 1.4rem; }
+    .reset { display: none; }
+  }
 </style>
 </head>
 <body>
