@@ -30,14 +30,40 @@
     max-width: 720px;
     margin: 0 auto;
   }
+  .titlebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
   h1 {
     font-size: 1.4rem;
     margin: 0 0 4px;
   }
   p.sub {
     color: var(--muted);
-    margin: 0 0 24px;
+    margin: 0 0 6px;
     font-size: 0.92rem;
+  }
+  .print-meta {
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin: 0 0 20px;
+  }
+  .printBtn {
+    flex: none;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .cards-grid {
+    display: block;
   }
   .card {
     background: var(--card);
@@ -120,27 +146,6 @@
     color: var(--text);
     font-size: 1rem;
   }
-  .total-card {
-    background: var(--total-bg);
-    color: var(--total-text);
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-  }
-  .total-card .label {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    opacity: 0.75;
-  }
-  .total-card .amount {
-    font-size: 1.9rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
   .reset {
     display: block;
     margin: 16px auto 0;
@@ -195,6 +200,11 @@
     color: var(--green);
     font-weight: 600;
   }
+  .weight-group {
+    border-top: 1px solid var(--border);
+    margin-top: 10px;
+    padding-top: 4px;
+  }
   .weight-row {
     display: flex;
     justify-content: space-between;
@@ -224,162 +234,247 @@
     .grid2 { grid-template-columns: 1fr; }
     .field input, .field select { width: 110px; }
   }
+
+  /* ---- One-page print layout ---- */
+  @media print {
+    @page { size: letter portrait; margin: 0.35in; }
+    body { background: #fff; color: #000; padding: 0; }
+    .wrap { max-width: 100%; }
+    .printBtn, .reset { display: none; }
+    h1 { font-size: 1.05rem; margin: 0 0 2px; }
+    p.sub { display: none; }
+    .print-meta {
+      display: block;
+      font-size: 0.68rem;
+      margin: 0 0 8px;
+      color: #444;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 12px;
+    }
+    .cards-grid .card {
+      margin-bottom: 0;
+      padding: 8px 10px;
+      border-color: #ccc;
+      border-radius: 6px;
+      break-inside: avoid;
+    }
+    .card#marginCard {
+      grid-column: 1 / -1;
+    }
+    .card h2 {
+      font-size: 0.62rem;
+      margin: 0 0 6px;
+      letter-spacing: 0.02em;
+    }
+    .field {
+      margin-bottom: 5px;
+      gap: 6px;
+    }
+    .field label {
+      font-size: 0.72rem;
+    }
+    .field .hint {
+      font-size: 0.62rem;
+    }
+    .field input, .field select {
+      width: 72px;
+      padding: 2px 4px;
+      font-size: 0.72rem;
+      border-color: #bbb;
+      color: #000;
+    }
+    .field input[type="text"] { width: 96px; }
+    .checkbox-field input { width: auto; }
+    .breakdown-row, .weight-row {
+      font-size: 0.72rem;
+      padding: 2px 0;
+    }
+    .breakdown-row.subtotal, .breakdown-row.net {
+      margin-top: 3px;
+      padding-top: 4px;
+    }
+    .weight-group {
+      margin-top: 5px;
+      padding-top: 2px;
+    }
+    table.margins { font-size: 0.7rem; }
+    table.margins th, table.margins td {
+      padding: 3px 4px;
+    }
+    table.margins thead th input {
+      width: 34px;
+      padding: 1px 2px;
+      font-size: 0.68rem;
+      border-color: #bbb;
+      color: #000;
+    }
+    .note { font-size: 0.62rem; margin-top: 4px; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Carbide Saw Pricing Calculator</h1>
-  <p class="sub">Enter the blade specs and shop rates to get a net cost, then see the sell price at several margin targets.</p>
-
-  <div class="card">
-    <h2>Order</h2>
-    <div class="grid2">
-      <div class="field">
-        <label for="customerName">Customer</label>
-        <input type="text" id="customerName" placeholder="Name">
-      </div>
-      <div class="field">
-        <label for="qty">Qty</label>
-        <input type="number" id="qty" min="1" step="1" value="1">
-      </div>
+  <div class="titlebar">
+    <div>
+      <h1>Carbide Saw Pricing Calculator</h1>
+      <p class="sub">Enter the blade specs and shop rates to get a net cost, then see the sell price at several margin targets.</p>
+      <p class="print-meta" id="printMeta"></p>
     </div>
+    <button class="printBtn" id="printBtn" type="button">Print</button>
   </div>
 
-  <div class="card">
-    <h2>Plate</h2>
-    <div class="grid2">
-      <div class="field">
-        <label for="diameter">Diameter (in)</label>
-        <input type="number" id="diameter" min="0" step="0.125" value="0">
-      </div>
-      <div class="field">
-        <label for="thickness">Thickness (in)</label>
-        <input type="number" id="thickness" min="0" step="0.001" value="0">
+  <div class="cards-grid">
+    <div class="card">
+      <h2>Order</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="customerName">Customer</label>
+          <input type="text" id="customerName" placeholder="Name">
+        </div>
+        <div class="field">
+          <label for="qty">Qty</label>
+          <input type="number" id="qty" min="1" step="1" value="1">
+        </div>
       </div>
     </div>
-    <div class="grid2">
+
+    <div class="card">
+      <h2>Plate</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="diameter">Diameter (in)</label>
+          <input type="number" id="diameter" min="0" step="0.125" value="0">
+        </div>
+        <div class="field">
+          <label for="thickness">Thickness (in)</label>
+          <input type="number" id="thickness" min="0" step="0.001" value="0">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="plateCost">Plate Cost ($)
+            <span class="hint">Per plate, from vendor</span>
+          </label>
+          <input type="number" id="plateCost" min="0" step="0.01" value="0.00">
+        </div>
+        <div class="field">
+          <label for="plateVendor">Vendor</label>
+          <input type="text" id="plateVendor" placeholder="e.g. Grasche">
+        </div>
+      </div>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="cnh">
+        <label for="cnh">CNH?</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Carbide Tips</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="teeth"># Teeth</label>
+          <input type="number" id="teeth" min="0" step="1" value="0">
+        </div>
+        <div class="field">
+          <label for="tipRate">Rate / tooth ($)</label>
+          <input type="number" id="tipRate" min="0" step="0.01" value="0.00">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Strobes</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="strobeInches">Inches of strobs</label>
+          <input type="number" id="strobeInches" min="0" step="0.25" value="0">
+        </div>
+        <div class="field">
+          <label for="strobeRate">Rate / inch ($)</label>
+          <input type="number" id="strobeRate" min="0" step="0.01" value="0.00">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Freight</h2>
       <div class="field">
-        <label for="plateCost">Plate Cost ($)
-          <span class="hint">Per plate, from vendor</span>
+        <label for="freightIn">Freight in ($)
+          <span class="hint">Included in total each</span>
         </label>
-        <input type="number" id="plateCost" min="0" step="0.01" value="0.00">
+        <input type="number" id="freightIn" min="0" step="0.01" value="0.00">
       </div>
       <div class="field">
-        <label for="plateVendor">Vendor</label>
-        <input type="text" id="plateVendor" placeholder="e.g. Grasche">
+        <label for="freightEstimate">Freight estimate ($)
+          <span class="hint">Total for the order, for reference only</span>
+        </label>
+        <input type="number" id="freightEstimate" min="0" step="0.01" value="0.00">
+      </div>
+      <div class="breakdown-row"><span>Freight estimate each</span><span id="bdFreightEach">$0.00</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Cost Breakdown</h2>
+      <div class="breakdown-row"><span>Tips (teeth × rate)</span><span id="bdTips">$0.00</span></div>
+      <div class="breakdown-row"><span>Strobes (inches × rate)</span><span id="bdStrobes">$0.00</span></div>
+      <div class="breakdown-row"><span>Plate</span><span id="bdPlate">$0.00</span></div>
+      <div class="breakdown-row subtotal"><span>Total parts/labor</span><span id="bdPartsLabor">$0.00</span></div>
+      <div class="breakdown-row"><span>Freight in</span><span id="bdFreightIn">$0.00</span></div>
+      <div class="breakdown-row net"><span>Net cost (total each)</span><span id="bdNetCost">$0.00</span></div>
+      <div class="weight-group">
+        <div class="weight-row"><span>Weight per blade</span><span id="bdWeightEach">0.00 lbs</span></div>
+        <div class="weight-row"><span>Total weight</span><span id="bdWeightTotal">0.00 lbs</span></div>
       </div>
     </div>
-    <div class="field checkbox-field">
-      <input type="checkbox" id="cnh">
-      <label for="cnh">CNH?</label>
+
+    <div class="card" id="marginCard">
+      <h2>Sell Price by Margin</h2>
+      <table class="margins" id="marginTable">
+        <thead>
+          <tr>
+            <th></th>
+            <th><input type="number" class="marginPct" min="0" max="95" step="1" value="15">%</th>
+            <th><input type="number" class="marginPct" min="0" max="95" step="1" value="20">%</th>
+            <th><input type="number" class="marginPct" min="0" max="95" step="1" value="25">%</th>
+            <th><input type="number" class="marginPct" min="0" max="95" step="1" value="30">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Price each</td>
+            <td class="price" data-row="price" data-col="0">$0.00</td>
+            <td class="price" data-row="price" data-col="1">$0.00</td>
+            <td class="price" data-row="price" data-col="2">$0.00</td>
+            <td class="price" data-row="price" data-col="3">$0.00</td>
+          </tr>
+          <tr>
+            <td>Margin each</td>
+            <td data-row="margin" data-col="0">$0.00</td>
+            <td data-row="margin" data-col="1">$0.00</td>
+            <td data-row="margin" data-col="2">$0.00</td>
+            <td data-row="margin" data-col="3">$0.00</td>
+          </tr>
+          <tr>
+            <td>Total margin</td>
+            <td class="margin-total" data-row="totalMargin" data-col="0">$0.00</td>
+            <td class="margin-total" data-row="totalMargin" data-col="1">$0.00</td>
+            <td class="margin-total" data-row="totalMargin" data-col="2">$0.00</td>
+            <td class="margin-total" data-row="totalMargin" data-col="3">$0.00</td>
+          </tr>
+          <tr>
+            <td>Order total</td>
+            <td data-row="orderTotal" data-col="0">$0.00</td>
+            <td data-row="orderTotal" data-col="1">$0.00</td>
+            <td data-row="orderTotal" data-col="2">$0.00</td>
+            <td data-row="orderTotal" data-col="3">$0.00</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="note">Price each = Net cost ÷ (1 − margin%). Total margin and order total scale by Qty.</p>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>Carbide Tips</h2>
-    <div class="grid2">
-      <div class="field">
-        <label for="teeth"># Teeth</label>
-        <input type="number" id="teeth" min="0" step="1" value="0">
-      </div>
-      <div class="field">
-        <label for="tipRate">Rate / tooth ($)</label>
-        <input type="number" id="tipRate" min="0" step="0.01" value="0.00">
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Strobes</h2>
-    <div class="grid2">
-      <div class="field">
-        <label for="strobeInches">Inches of strobs</label>
-        <input type="number" id="strobeInches" min="0" step="0.25" value="0">
-      </div>
-      <div class="field">
-        <label for="strobeRate">Rate / inch ($)</label>
-        <input type="number" id="strobeRate" min="0" step="0.01" value="0.00">
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Freight</h2>
-    <div class="field">
-      <label for="freightIn">Freight in ($)
-        <span class="hint">Included in total each</span>
-      </label>
-      <input type="number" id="freightIn" min="0" step="0.01" value="0.00">
-    </div>
-    <div class="field">
-      <label for="freightEstimate">Freight estimate ($)
-        <span class="hint">Total for the order, for reference only</span>
-      </label>
-      <input type="number" id="freightEstimate" min="0" step="0.01" value="0.00">
-    </div>
-    <div class="breakdown-row"><span>Freight estimate each</span><span id="bdFreightEach">$0.00</span></div>
-  </div>
-
-  <div class="card">
-    <h2>Cost Breakdown</h2>
-    <div class="breakdown-row"><span>Tips (teeth × rate)</span><span id="bdTips">$0.00</span></div>
-    <div class="breakdown-row"><span>Strobes (inches × rate)</span><span id="bdStrobes">$0.00</span></div>
-    <div class="breakdown-row"><span>Plate</span><span id="bdPlate">$0.00</span></div>
-    <div class="breakdown-row subtotal"><span>Total parts/labor</span><span id="bdPartsLabor">$0.00</span></div>
-    <div class="breakdown-row"><span>Freight in</span><span id="bdFreightIn">$0.00</span></div>
-    <div class="breakdown-row net"><span>Net cost (total each)</span><span id="bdNetCost">$0.00</span></div>
-  </div>
-
-  <div class="card">
-    <h2>Weight</h2>
-    <div class="weight-row"><span>Weight per blade</span><span id="bdWeightEach">0.00 lbs</span></div>
-    <div class="weight-row"><span>Total weight</span><span id="bdWeightTotal">0.00 lbs</span></div>
-  </div>
-
-  <div class="card">
-    <h2>Sell Price by Margin</h2>
-    <table class="margins" id="marginTable">
-      <thead>
-        <tr>
-          <th></th>
-          <th><input type="number" class="marginPct" min="0" max="95" step="1" value="15">%</th>
-          <th><input type="number" class="marginPct" min="0" max="95" step="1" value="20">%</th>
-          <th><input type="number" class="marginPct" min="0" max="95" step="1" value="25">%</th>
-          <th><input type="number" class="marginPct" min="0" max="95" step="1" value="30">%</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Price each</td>
-          <td class="price" data-row="price" data-col="0">$0.00</td>
-          <td class="price" data-row="price" data-col="1">$0.00</td>
-          <td class="price" data-row="price" data-col="2">$0.00</td>
-          <td class="price" data-row="price" data-col="3">$0.00</td>
-        </tr>
-        <tr>
-          <td>Margin each</td>
-          <td data-row="margin" data-col="0">$0.00</td>
-          <td data-row="margin" data-col="1">$0.00</td>
-          <td data-row="margin" data-col="2">$0.00</td>
-          <td data-row="margin" data-col="3">$0.00</td>
-        </tr>
-        <tr>
-          <td>Total margin</td>
-          <td class="margin-total" data-row="totalMargin" data-col="0">$0.00</td>
-          <td class="margin-total" data-row="totalMargin" data-col="1">$0.00</td>
-          <td class="margin-total" data-row="totalMargin" data-col="2">$0.00</td>
-          <td class="margin-total" data-row="totalMargin" data-col="3">$0.00</td>
-        </tr>
-        <tr>
-          <td>Order total</td>
-          <td data-row="orderTotal" data-col="0">$0.00</td>
-          <td data-row="orderTotal" data-col="1">$0.00</td>
-          <td data-row="orderTotal" data-col="2">$0.00</td>
-          <td data-row="orderTotal" data-col="3">$0.00</td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="note">Price each = Net cost ÷ (1 − margin%). Total margin and order total scale by Qty.</p>
   </div>
 
   <button class="reset" id="resetBtn">Reset all fields</button>
@@ -410,6 +505,8 @@
     bdNetCost: document.getElementById("bdNetCost"),
     bdWeightEach: document.getElementById("bdWeightEach"),
     bdWeightTotal: document.getElementById("bdWeightTotal"),
+    printMeta: document.getElementById("printMeta"),
+    printBtn: document.getElementById("printBtn"),
     resetBtn: document.getElementById("resetBtn")
   };
   const marginInputs = Array.from(document.querySelectorAll(".marginPct"));
@@ -440,6 +537,13 @@
         margins: marginInputs.map((inp) => inp.value)
       }));
     } catch (e) { /* ignore */ }
+  }
+
+  function updatePrintMeta() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    const timeStr = now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    el.printMeta.textContent = "Printed " + dateStr + " at " + timeStr;
   }
 
   function calculate() {
@@ -494,6 +598,9 @@
     node.addEventListener("change", calculate);
   });
 
+  el.printBtn.addEventListener("click", () => window.print());
+  window.addEventListener("beforeprint", updatePrintMeta);
+
   el.resetBtn.addEventListener("click", () => {
     el.customerName.value = "";
     el.qty.value = 1;
@@ -514,6 +621,7 @@
   });
 
   loadDefaults();
+  updatePrintMeta();
   calculate();
 })();
 </script>
