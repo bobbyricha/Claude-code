@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Saw Blade Price Calculator</title>
+<title>Carbide Saw Pricing Calculator</title>
 <style>
   :root {
     --bg: #f5f6f8;
@@ -15,6 +15,8 @@
     --accent-light: #eef2ff;
     --total-bg: #0f172a;
     --total-text: #ffffff;
+    --green: #15803d;
+    --green-light: #ecfdf3;
   }
   * { box-sizing: border-box; }
   body {
@@ -25,8 +27,15 @@
     color: var(--text);
   }
   .wrap {
-    max-width: 560px;
+    max-width: 720px;
     margin: 0 auto;
+  }
+  .titlebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 4px;
   }
   h1 {
     font-size: 1.4rem;
@@ -34,8 +43,27 @@
   }
   p.sub {
     color: var(--muted);
-    margin: 0 0 24px;
+    margin: 0 0 6px;
     font-size: 0.92rem;
+  }
+  .print-meta {
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin: 0 0 20px;
+  }
+  .printBtn {
+    flex: none;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .cards-grid {
+    display: block;
   }
   .card {
     background: var(--card);
@@ -50,6 +78,11 @@
     letter-spacing: 0.04em;
     color: var(--muted);
     margin: 0 0 16px;
+  }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 20px;
   }
   .field {
     display: flex;
@@ -69,7 +102,7 @@
     margin-top: 2px;
   }
   .field input, .field select {
-    width: 130px;
+    width: 120px;
     padding: 8px 10px;
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -78,14 +111,14 @@
     background: #fff;
     color: var(--text);
   }
+  .field input[type="text"] {
+    text-align: left;
+    width: 150px;
+  }
   .field input:focus, .field select:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-light);
-  }
-  .markup-row select {
-    text-align: left;
-    width: 90px;
   }
   .breakdown-row {
     display: flex;
@@ -105,25 +138,13 @@
     font-weight: 600;
     color: var(--text);
   }
-  .total-card {
-    background: var(--total-bg);
-    color: var(--total-text);
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .total-card .label {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    opacity: 0.75;
-  }
-  .total-card .amount {
-    font-size: 1.9rem;
+  .breakdown-row.net {
+    border-top: 2px solid var(--text);
+    margin-top: 6px;
+    padding-top: 10px;
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    font-size: 1rem;
   }
   .reset {
     display: block;
@@ -136,84 +157,324 @@
     cursor: pointer;
     padding: 4px;
   }
-  @media (max-width: 380px) {
-    .field { flex-direction: row; }
+  table.margins {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  table.margins th, table.margins td {
+    text-align: right;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  table.margins th:first-child, table.margins td:first-child {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  table.margins thead th {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  table.margins thead th input {
+    width: 52px;
+    padding: 4px 4px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: right;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+  table.margins tbody tr:last-child td {
+    border-bottom: none;
+  }
+  table.margins td.price {
+    font-weight: 700;
+    color: var(--text);
+  }
+  table.margins td.margin-total {
+    color: var(--green);
+    font-weight: 600;
+  }
+  .weight-group {
+    border-top: 1px solid var(--border);
+    margin-top: 10px;
+    padding-top: 4px;
+  }
+  .weight-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.92rem;
+    padding: 6px 0;
+  }
+  .weight-row span:last-child {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  .checkbox-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+  .checkbox-field input {
+    width: auto;
+  }
+  .note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.4;
+  }
+  @media (max-width: 480px) {
+    .grid2 { grid-template-columns: 1fr; }
     .field input, .field select { width: 110px; }
+  }
+
+  /* ---- One-page print layout ---- */
+  @media print {
+    @page { size: letter portrait; margin: 0.35in; }
+    body { background: #fff; color: #000; padding: 0; }
+    .wrap { max-width: 100%; }
+    .printBtn, .reset { display: none; }
+    h1 { font-size: 1.05rem; margin: 0 0 2px; }
+    p.sub { display: none; }
+    .print-meta {
+      display: block;
+      font-size: 0.68rem;
+      margin: 0 0 8px;
+      color: #444;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 12px;
+    }
+    .cards-grid .card {
+      margin-bottom: 0;
+      padding: 8px 10px;
+      border-color: #ccc;
+      border-radius: 6px;
+      break-inside: avoid;
+    }
+    .card#marginCard {
+      grid-column: 1 / -1;
+    }
+    .card h2 {
+      font-size: 0.62rem;
+      margin: 0 0 6px;
+      letter-spacing: 0.02em;
+    }
+    .field {
+      margin-bottom: 5px;
+      gap: 6px;
+    }
+    .field label {
+      font-size: 0.72rem;
+    }
+    .field .hint {
+      font-size: 0.62rem;
+    }
+    .field input, .field select {
+      width: 72px;
+      padding: 2px 4px;
+      font-size: 0.72rem;
+      border-color: #bbb;
+      color: #000;
+    }
+    .field input[type="text"] { width: 96px; }
+    .checkbox-field input { width: auto; }
+    .breakdown-row, .weight-row {
+      font-size: 0.72rem;
+      padding: 2px 0;
+    }
+    .breakdown-row.subtotal, .breakdown-row.net {
+      margin-top: 3px;
+      padding-top: 4px;
+    }
+    .weight-group {
+      margin-top: 5px;
+      padding-top: 2px;
+    }
+    table.margins { font-size: 0.7rem; }
+    table.margins th, table.margins td {
+      padding: 3px 4px;
+    }
+    table.margins thead th input {
+      width: 34px;
+      padding: 1px 2px;
+      font-size: 0.68rem;
+      border-color: #bbb;
+      color: #000;
+    }
+    .note { font-size: 0.62rem; margin-top: 4px; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Saw Blade Price Calculator</h1>
-  <p class="sub">Enter the plate details and per-unit rates to get a subtotal, then apply markup for the final customer price.</p>
-
-  <div class="card">
-    <h2>Plate</h2>
-    <div class="field">
-      <label for="platePrice">Plate Price ($)
-        <span class="hint">Price per plate</span>
-      </label>
-      <input type="number" id="platePrice" min="0" step="0.01" value="0.00">
+  <div class="titlebar">
+    <div>
+      <h1>Carbide Saw Pricing Calculator</h1>
+      <p class="sub">Enter the blade specs and shop rates to get a net cost, then see the sell price at several margin targets.</p>
+      <p class="print-meta" id="printMeta"></p>
     </div>
-    <div class="field">
-      <label for="plateQty">Plate Quantity</label>
-      <input type="number" id="plateQty" min="0" step="1" value="1">
-    </div>
-    <div class="field">
-      <label for="tipCount">Number of Tips</label>
-      <input type="number" id="tipCount" min="0" step="1" value="0">
-    </div>
-    <div class="field">
-      <label for="strobeCount">Number of Carbide Strobes
-        <span class="hint">0 if the blade has none</span>
-      </label>
-      <input type="number" id="strobeCount" min="0" step="1" value="0">
-    </div>
+    <button class="printBtn" id="printBtn" type="button">Print</button>
   </div>
 
-  <div class="card">
-    <h2>Rates</h2>
-    <div class="field">
-      <label for="tipRate">Rate per Tip ($)
-        <span class="hint">Cost added per carbide tip</span>
-      </label>
-      <input type="number" id="tipRate" min="0" step="0.01" value="0.00">
+  <div class="cards-grid">
+    <div class="card">
+      <h2>Order</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="customerName">Customer</label>
+          <input type="text" id="customerName" placeholder="Name">
+        </div>
+        <div class="field">
+          <label for="qty">Qty</label>
+          <input type="number" id="qty" min="1" step="1" value="1">
+        </div>
+      </div>
     </div>
-    <div class="field">
-      <label for="strobeRate">Rate per Strobe ($)
-        <span class="hint">Cost added per carbide strobe strip</span>
-      </label>
-      <input type="number" id="strobeRate" min="0" step="0.01" value="0.00">
-    </div>
-  </div>
 
-  <div class="card">
-    <h2>Breakdown</h2>
-    <div class="breakdown-row"><span>Plate cost (price × qty)</span><span id="bdPlate">$0.00</span></div>
-    <div class="breakdown-row"><span>Tips cost (count × rate)</span><span id="bdTips">$0.00</span></div>
-    <div class="breakdown-row"><span>Strobes cost (count × rate)</span><span id="bdStrobes">$0.00</span></div>
-    <div class="breakdown-row subtotal"><span>Subtotal</span><span id="bdSubtotal">$0.00</span></div>
-  </div>
-
-  <div class="card">
-    <h2>Markup</h2>
-    <div class="field markup-row">
-      <label for="markupType">Apply as</label>
-      <select id="markupType">
-        <option value="percent">Percent (%)</option>
-        <option value="flat">Flat ($)</option>
-      </select>
+    <div class="card">
+      <h2>Plate</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="diameter">Diameter (in)</label>
+          <input type="number" id="diameter" min="0" step="0.125" value="0">
+        </div>
+        <div class="field">
+          <label for="thickness">Thickness (in)</label>
+          <input type="number" id="thickness" min="0" step="0.001" value="0">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="plateCost">Plate Cost ($)
+            <span class="hint">Per plate, from vendor</span>
+          </label>
+          <input type="number" id="plateCost" min="0" step="0.01" value="0.00">
+        </div>
+        <div class="field">
+          <label for="plateVendor">Vendor</label>
+          <input type="text" id="plateVendor" placeholder="e.g. Grasche">
+        </div>
+      </div>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="cnh">
+        <label for="cnh">CNH?</label>
+      </div>
     </div>
-    <div class="field">
-      <label for="markupValue">Markup value</label>
-      <input type="number" id="markupValue" min="0" step="0.01" value="0">
-    </div>
-    <div class="breakdown-row"><span>Markup amount</span><span id="bdMarkup">$0.00</span></div>
-  </div>
 
-  <div class="total-card">
-    <span class="label">Final Price</span>
-    <span class="amount" id="finalPrice">$0.00</span>
+    <div class="card">
+      <h2>Carbide Tips</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="teeth"># Teeth</label>
+          <input type="number" id="teeth" min="0" step="1" value="0">
+        </div>
+        <div class="field">
+          <label for="tipRate">Rate / tooth ($)</label>
+          <input type="number" id="tipRate" min="0" step="0.01" value="0.00">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Strobes</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="strobeInches">Inches of strobs</label>
+          <input type="number" id="strobeInches" min="0" step="0.25" value="0">
+        </div>
+        <div class="field">
+          <label for="strobeRate">Rate / inch ($)</label>
+          <input type="number" id="strobeRate" min="0" step="0.01" value="0.00">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Freight</h2>
+      <div class="field">
+        <label for="freightIn">Freight in ($)
+          <span class="hint">Included in total each</span>
+        </label>
+        <input type="number" id="freightIn" min="0" step="0.01" value="0.00">
+      </div>
+      <div class="field">
+        <label for="freightEstimate">Freight estimate ($)
+          <span class="hint">Total for the order, for reference only</span>
+        </label>
+        <input type="number" id="freightEstimate" min="0" step="0.01" value="0.00">
+      </div>
+      <div class="breakdown-row"><span>Freight estimate each</span><span id="bdFreightEach">$0.00</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Cost Breakdown</h2>
+      <div class="breakdown-row"><span>Tips (teeth × rate)</span><span id="bdTips">$0.00</span></div>
+      <div class="breakdown-row"><span>Strobes (inches × rate)</span><span id="bdStrobes">$0.00</span></div>
+      <div class="breakdown-row"><span>Plate</span><span id="bdPlate">$0.00</span></div>
+      <div class="breakdown-row subtotal"><span>Total parts/labor</span><span id="bdPartsLabor">$0.00</span></div>
+      <div class="breakdown-row"><span>Freight in</span><span id="bdFreightIn">$0.00</span></div>
+      <div class="breakdown-row net"><span>Net cost (total each)</span><span id="bdNetCost">$0.00</span></div>
+      <div class="weight-group">
+        <div class="weight-row"><span>Weight per blade</span><span id="bdWeightEach">0.00 lbs</span></div>
+        <div class="weight-row"><span>Total weight</span><span id="bdWeightTotal">0.00 lbs</span></div>
+      </div>
+    </div>
+
+    <div class="card" id="marginCard">
+      <h2>Sell Price by Margin</h2>
+      <table class="margins" id="marginTable">
+        <thead>
+          <tr>
+            <th></th>
+            <th><input type="number" class="marginPct" min="0" max="95" step="1" value="15">%</th>
+            <th><input type="number" class="marginPct" min="0" max="95" step="1" value="20">%</th>
+            <th><input type="number" class="marginPct" min="0" max="95" step="1" value="25">%</th>
+            <th><input type="number" class="marginPct" min="0" max="95" step="1" value="30">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Price each</td>
+            <td class="price" data-row="price" data-col="0">$0.00</td>
+            <td class="price" data-row="price" data-col="1">$0.00</td>
+            <td class="price" data-row="price" data-col="2">$0.00</td>
+            <td class="price" data-row="price" data-col="3">$0.00</td>
+          </tr>
+          <tr>
+            <td>Margin each</td>
+            <td data-row="margin" data-col="0">$0.00</td>
+            <td data-row="margin" data-col="1">$0.00</td>
+            <td data-row="margin" data-col="2">$0.00</td>
+            <td data-row="margin" data-col="3">$0.00</td>
+          </tr>
+          <tr>
+            <td>Total margin</td>
+            <td class="margin-total" data-row="totalMargin" data-col="0">$0.00</td>
+            <td class="margin-total" data-row="totalMargin" data-col="1">$0.00</td>
+            <td class="margin-total" data-row="totalMargin" data-col="2">$0.00</td>
+            <td class="margin-total" data-row="totalMargin" data-col="3">$0.00</td>
+          </tr>
+          <tr>
+            <td>Order total</td>
+            <td data-row="orderTotal" data-col="0">$0.00</td>
+            <td data-row="orderTotal" data-col="1">$0.00</td>
+            <td data-row="orderTotal" data-col="2">$0.00</td>
+            <td data-row="orderTotal" data-col="3">$0.00</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="note">Price each = Net cost ÷ (1 − margin%). Total margin and order total scale by Qty.</p>
+    </div>
   </div>
 
   <button class="reset" id="resetBtn">Reset all fields</button>
@@ -222,90 +483,145 @@
 <script>
 (function () {
   const el = {
-    platePrice: document.getElementById("platePrice"),
-    plateQty: document.getElementById("plateQty"),
-    tipCount: document.getElementById("tipCount"),
-    strobeCount: document.getElementById("strobeCount"),
+    customerName: document.getElementById("customerName"),
+    qty: document.getElementById("qty"),
+    diameter: document.getElementById("diameter"),
+    thickness: document.getElementById("thickness"),
+    plateCost: document.getElementById("plateCost"),
+    plateVendor: document.getElementById("plateVendor"),
+    cnh: document.getElementById("cnh"),
+    teeth: document.getElementById("teeth"),
     tipRate: document.getElementById("tipRate"),
+    strobeInches: document.getElementById("strobeInches"),
     strobeRate: document.getElementById("strobeRate"),
-    markupType: document.getElementById("markupType"),
-    markupValue: document.getElementById("markupValue"),
-    bdPlate: document.getElementById("bdPlate"),
+    freightIn: document.getElementById("freightIn"),
+    freightEstimate: document.getElementById("freightEstimate"),
+    bdFreightEach: document.getElementById("bdFreightEach"),
     bdTips: document.getElementById("bdTips"),
     bdStrobes: document.getElementById("bdStrobes"),
-    bdSubtotal: document.getElementById("bdSubtotal"),
-    bdMarkup: document.getElementById("bdMarkup"),
-    finalPrice: document.getElementById("finalPrice"),
+    bdPlate: document.getElementById("bdPlate"),
+    bdPartsLabor: document.getElementById("bdPartsLabor"),
+    bdFreightIn: document.getElementById("bdFreightIn"),
+    bdNetCost: document.getElementById("bdNetCost"),
+    bdWeightEach: document.getElementById("bdWeightEach"),
+    bdWeightTotal: document.getElementById("bdWeightTotal"),
+    printMeta: document.getElementById("printMeta"),
+    printBtn: document.getElementById("printBtn"),
     resetBtn: document.getElementById("resetBtn")
   };
+  const marginInputs = Array.from(document.querySelectorAll(".marginPct"));
+  const tableCells = Array.from(document.querySelectorAll("#marginTable td[data-row]"));
 
   const fmt = (n) => "$" + (isFinite(n) ? n : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtLbs = (n) => (isFinite(n) ? n : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " lbs";
   const num = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 
-  const STORAGE_KEY = "sawBladeCalcRates";
+  const STORAGE_KEY = "carbideSawCalcDefaults";
 
-  function loadRates() {
+  function loadDefaults() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
       if (saved.tipRate !== undefined) el.tipRate.value = saved.tipRate;
       if (saved.strobeRate !== undefined) el.strobeRate.value = saved.strobeRate;
+      if (Array.isArray(saved.margins) && saved.margins.length === marginInputs.length) {
+        marginInputs.forEach((inp, i) => { inp.value = saved.margins[i]; });
+      }
     } catch (e) { /* ignore */ }
   }
 
-  function saveRates() {
+  function saveDefaults() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         tipRate: el.tipRate.value,
-        strobeRate: el.strobeRate.value
+        strobeRate: el.strobeRate.value,
+        margins: marginInputs.map((inp) => inp.value)
       }));
     } catch (e) { /* ignore */ }
   }
 
-  function calculate() {
-    const plateCost = num(el.platePrice.value) * num(el.plateQty.value);
-    const tipsCost = num(el.tipCount.value) * num(el.tipRate.value);
-    const strobesCost = num(el.strobeCount.value) * num(el.strobeRate.value);
-    const subtotal = plateCost + tipsCost + strobesCost;
-
-    let markupAmount = 0;
-    if (el.markupType.value === "percent") {
-      markupAmount = subtotal * (num(el.markupValue.value) / 100);
-    } else {
-      markupAmount = num(el.markupValue.value);
-    }
-
-    const finalPrice = subtotal + markupAmount;
-
-    el.bdPlate.textContent = fmt(plateCost);
-    el.bdTips.textContent = fmt(tipsCost);
-    el.bdStrobes.textContent = fmt(strobesCost);
-    el.bdSubtotal.textContent = fmt(subtotal);
-    el.bdMarkup.textContent = fmt(markupAmount);
-    el.finalPrice.textContent = fmt(finalPrice);
-
-    saveRates();
+  function updatePrintMeta() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    const timeStr = now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    el.printMeta.textContent = "Printed " + dateStr + " at " + timeStr;
   }
 
-  Object.values(el).forEach((node) => {
-    if (node && (node.tagName === "INPUT" || node.tagName === "SELECT")) {
-      node.addEventListener("input", calculate);
-      node.addEventListener("change", calculate);
-    }
+  function calculate() {
+    const qty = Math.max(num(el.qty.value), 0);
+    const diameter = num(el.diameter.value);
+    const thickness = num(el.thickness.value);
+    const plateCost = num(el.plateCost.value);
+    const teeth = num(el.teeth.value);
+    const tipRate = num(el.tipRate.value);
+    const strobeInches = num(el.strobeInches.value);
+    const strobeRate = num(el.strobeRate.value);
+    const freightIn = num(el.freightIn.value);
+    const freightEstimate = num(el.freightEstimate.value);
+
+    const tipsCost = teeth * tipRate;
+    const strobesCost = strobeInches * strobeRate;
+    const partsLabor = tipsCost + strobesCost + plateCost;
+    const netCost = partsLabor + freightIn;
+    const freightEach = qty > 0 ? freightEstimate / qty : 0;
+
+    const weightEach = diameter * diameter * thickness * 0.79 * 0.284;
+    const weightTotal = qty * weightEach;
+
+    el.bdTips.textContent = fmt(tipsCost);
+    el.bdStrobes.textContent = fmt(strobesCost);
+    el.bdPlate.textContent = fmt(plateCost);
+    el.bdPartsLabor.textContent = fmt(partsLabor);
+    el.bdFreightIn.textContent = fmt(freightIn);
+    el.bdNetCost.textContent = fmt(netCost);
+    el.bdFreightEach.textContent = fmt(freightEach);
+    el.bdWeightEach.textContent = fmtLbs(weightEach);
+    el.bdWeightTotal.textContent = fmtLbs(weightTotal);
+
+    marginInputs.forEach((inp, i) => {
+      const pct = Math.min(Math.max(num(inp.value), 0), 95) / 100;
+      const price = pct < 1 ? netCost / (1 - pct) : 0;
+      const marginEach = price - netCost;
+      const totalMargin = qty * marginEach;
+      const orderTotal = qty * price;
+
+      tableCells.find((c) => c.dataset.row === "price" && c.dataset.col == i).textContent = fmt(price);
+      tableCells.find((c) => c.dataset.row === "margin" && c.dataset.col == i).textContent = fmt(marginEach);
+      tableCells.find((c) => c.dataset.row === "totalMargin" && c.dataset.col == i).textContent = fmt(totalMargin);
+      tableCells.find((c) => c.dataset.row === "orderTotal" && c.dataset.col == i).textContent = fmt(orderTotal);
+    });
+
+    saveDefaults();
+  }
+
+  document.querySelectorAll("input, select").forEach((node) => {
+    node.addEventListener("input", calculate);
+    node.addEventListener("change", calculate);
   });
 
+  el.printBtn.addEventListener("click", () => window.print());
+  window.addEventListener("beforeprint", updatePrintMeta);
+
   el.resetBtn.addEventListener("click", () => {
-    el.platePrice.value = "0.00";
-    el.plateQty.value = 1;
-    el.tipCount.value = 0;
-    el.strobeCount.value = 0;
+    el.customerName.value = "";
+    el.qty.value = 1;
+    el.diameter.value = 0;
+    el.thickness.value = 0;
+    el.plateCost.value = "0.00";
+    el.plateVendor.value = "";
+    el.cnh.checked = false;
+    el.teeth.value = 0;
     el.tipRate.value = "0.00";
+    el.strobeInches.value = 0;
     el.strobeRate.value = "0.00";
-    el.markupType.value = "percent";
-    el.markupValue.value = 0;
+    el.freightIn.value = "0.00";
+    el.freightEstimate.value = "0.00";
+    const defaults = [15, 20, 25, 30];
+    marginInputs.forEach((inp, i) => { inp.value = defaults[i]; });
     calculate();
   });
 
-  loadRates();
+  loadDefaults();
+  updatePrintMeta();
   calculate();
 })();
 </script>
