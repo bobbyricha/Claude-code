@@ -230,6 +230,57 @@
     margin-top: 10px;
     line-height: 1.4;
   }
+  .saveQuoteBtn {
+    display: block;
+    margin-top: 14px;
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .historyActions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .historyBtn {
+    flex: 1;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .historyBtn.danger {
+    color: #b91c1c;
+    border-color: #f3d0d0;
+  }
+  .historyDelete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 2px 6px;
+  }
+  .historyDelete:hover {
+    color: #b91c1c;
+  }
+  #historyTable td, #historyTable th {
+    white-space: nowrap;
+  }
+  #historyTable td:nth-child(2) {
+    white-space: normal;
+    max-width: 140px;
+  }
   @media (max-width: 480px) {
     .grid2 { grid-template-columns: 1fr; }
     .field input, .field select { width: 110px; }
@@ -240,7 +291,7 @@
     @page { size: letter portrait; margin: 0.35in; }
     body { background: #fff; color: #000; padding: 0; }
     .wrap { max-width: 100%; }
-    .printBtn, .reset { display: none; }
+    .printBtn, .reset, .saveQuoteBtn, #historyCard { display: none; }
     h1 { font-size: 1.05rem; margin: 0 0 2px; }
     p.sub { display: none; }
     .print-meta {
@@ -474,7 +525,34 @@
         </tbody>
       </table>
       <p class="note">Price each = Net cost ÷ (1 − margin%). Total margin and order total scale by Qty.</p>
+      <button class="saveQuoteBtn" id="saveQuoteBtn" type="button">Save this quote</button>
     </div>
+  </div>
+
+  <div class="card" id="historyCard">
+    <h2>Quote History</h2>
+    <div id="historyEmpty" class="note">No quotes saved yet. Use "Save this quote" above to start a record.</div>
+    <div id="historyTableWrap" style="overflow-x:auto; display:none;">
+      <table class="margins" id="historyTable">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Date</th>
+            <th style="text-align:left;">Customer</th>
+            <th>Qty</th>
+            <th>Diameter</th>
+            <th>Net Cost</th>
+            <th>Price Range</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+    <div class="historyActions">
+      <button class="historyBtn" id="exportCsvBtn" type="button">Export CSV</button>
+      <button class="historyBtn danger" id="clearHistoryBtn" type="button">Clear history</button>
+    </div>
+    <p class="note">Saved in this browser only — use Export CSV to keep a copy elsewhere.</p>
   </div>
 
   <button class="reset" id="resetBtn">Reset all fields</button>
@@ -507,7 +585,13 @@
     bdWeightTotal: document.getElementById("bdWeightTotal"),
     printMeta: document.getElementById("printMeta"),
     printBtn: document.getElementById("printBtn"),
-    resetBtn: document.getElementById("resetBtn")
+    resetBtn: document.getElementById("resetBtn"),
+    saveQuoteBtn: document.getElementById("saveQuoteBtn"),
+    historyEmpty: document.getElementById("historyEmpty"),
+    historyTableWrap: document.getElementById("historyTableWrap"),
+    historyBody: document.getElementById("historyBody"),
+    exportCsvBtn: document.getElementById("exportCsvBtn"),
+    clearHistoryBtn: document.getElementById("clearHistoryBtn")
   };
   const marginInputs = Array.from(document.querySelectorAll(".marginPct"));
   const tableCells = Array.from(document.querySelectorAll("#marginTable td[data-row]"));
@@ -517,6 +601,8 @@
   const num = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 
   const STORAGE_KEY = "carbideSawCalcDefaults";
+  const HISTORY_KEY = "carbideSawQuoteHistory";
+  let lastCalc = null;
 
   function loadDefaults() {
     try {
@@ -577,7 +663,7 @@
     el.bdWeightEach.textContent = fmtLbs(weightEach);
     el.bdWeightTotal.textContent = fmtLbs(weightTotal);
 
-    marginInputs.forEach((inp, i) => {
+    const marginResults = marginInputs.map((inp, i) => {
       const pct = Math.min(Math.max(num(inp.value), 0), 95) / 100;
       const price = pct < 1 ? netCost / (1 - pct) : 0;
       const marginEach = price - netCost;
@@ -588,10 +674,122 @@
       tableCells.find((c) => c.dataset.row === "margin" && c.dataset.col == i).textContent = fmt(marginEach);
       tableCells.find((c) => c.dataset.row === "totalMargin" && c.dataset.col == i).textContent = fmt(totalMargin);
       tableCells.find((c) => c.dataset.row === "orderTotal" && c.dataset.col == i).textContent = fmt(orderTotal);
+
+      return { pct: pct * 100, price, marginEach, totalMargin, orderTotal };
     });
+
+    lastCalc = {
+      customerName: el.customerName.value,
+      qty, diameter, thickness, plateCost,
+      plateVendor: el.plateVendor.value,
+      cnh: el.cnh.checked,
+      teeth, tipRate, strobeInches, strobeRate,
+      freightIn, freightEstimate, freightEach,
+      tipsCost, strobesCost, partsLabor, netCost,
+      weightEach, weightTotal,
+      margins: marginResults
+    };
 
     saveDefaults();
   }
+
+  function loadHistoryList() {
+    try {
+      const list = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  }
+
+  function persistHistoryList(list) {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch (e) { /* ignore */ }
+  }
+
+  function renderHistory() {
+    const list = loadHistoryList();
+    if (list.length === 0) {
+      el.historyEmpty.style.display = "block";
+      el.historyTableWrap.style.display = "none";
+      return;
+    }
+    el.historyEmpty.style.display = "none";
+    el.historyTableWrap.style.display = "block";
+    el.historyBody.innerHTML = list.map((q) => {
+      const prices = q.margins.map((m) => m.price);
+      const range = prices.length ? fmt(Math.min(...prices)) + " – " + fmt(Math.max(...prices)) : "—";
+      return "<tr>" +
+        "<td style=\"text-align:left;\">" + q.dateLabel + "</td>" +
+        "<td style=\"text-align:left;\">" + (q.customerName || "—") + "</td>" +
+        "<td>" + q.qty + "</td>" +
+        "<td>" + q.diameter + "\"</td>" +
+        "<td>" + fmt(q.netCost) + "</td>" +
+        "<td>" + range + "</td>" +
+        "<td><button class=\"historyDelete\" data-id=\"" + q.id + "\" type=\"button\" title=\"Delete\">✕</button></td>" +
+        "</tr>";
+    }).join("");
+  }
+
+  function csvField(v) {
+    const s = String(v === undefined || v === null ? "" : v);
+    return /[",\n]/.test(s) ? "\"" + s.replace(/"/g, "\"\"") + "\"" : s;
+  }
+
+  el.saveQuoteBtn.addEventListener("click", () => {
+    if (!lastCalc) return;
+    const now = new Date();
+    const list = loadHistoryList();
+    list.unshift(Object.assign({}, lastCalc, {
+      id: now.getTime() + "-" + Math.random().toString(36).slice(2, 7),
+      dateLabel: now.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) +
+        " " + now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+    }));
+    persistHistoryList(list);
+    renderHistory();
+  });
+
+  el.historyBody.addEventListener("click", (e) => {
+    const btn = e.target.closest(".historyDelete");
+    if (!btn) return;
+    const list = loadHistoryList().filter((q) => q.id !== btn.dataset.id);
+    persistHistoryList(list);
+    renderHistory();
+  });
+
+  el.clearHistoryBtn.addEventListener("click", () => {
+    if (!confirm("Clear all saved quotes? This can't be undone.")) return;
+    persistHistoryList([]);
+    renderHistory();
+  });
+
+  el.exportCsvBtn.addEventListener("click", () => {
+    const list = loadHistoryList();
+    if (list.length === 0) return;
+    const marginCount = list[0].margins.length;
+    const headers = ["Date", "Customer", "Qty", "Diameter", "Thickness", "Plate Cost", "Vendor", "CNH",
+      "Teeth", "Tip Rate", "Strobe Inches", "Strobe Rate", "Freight In", "Freight Estimate",
+      "Net Cost", "Weight Each (lbs)", "Weight Total (lbs)"];
+    for (let i = 0; i < marginCount; i++) {
+      headers.push("Margin % " + (i + 1), "Price " + (i + 1), "Margin $ " + (i + 1), "Total Margin " + (i + 1), "Order Total " + (i + 1));
+    }
+    const rows = list.map((q) => {
+      const row = [q.dateLabel, q.customerName, q.qty, q.diameter, q.thickness, q.plateCost, q.plateVendor,
+        q.cnh ? "Y" : "N", q.teeth, q.tipRate, q.strobeInches, q.strobeRate, q.freightIn, q.freightEstimate,
+        q.netCost.toFixed(2), q.weightEach.toFixed(2), q.weightTotal.toFixed(2)];
+      q.margins.forEach((m) => {
+        row.push(m.pct, m.price.toFixed(2), m.marginEach.toFixed(2), m.totalMargin.toFixed(2), m.orderTotal.toFixed(2));
+      });
+      return row;
+    });
+    const csv = [headers, ...rows].map((r) => r.map(csvField).join(",")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "saw-quote-history.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
 
   document.querySelectorAll("input, select").forEach((node) => {
     node.addEventListener("input", calculate);
@@ -623,6 +821,7 @@
   loadDefaults();
   updatePrintMeta();
   calculate();
+  renderHistory();
 })();
 </script>
 </body>
