@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saw Blade Price Calculator</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --border: #dde1e6;
+    --text: #1c2530;
+    --muted: #5b6673;
+    --accent: #2563eb;
+    --accent-light: #eef2ff;
+    --total-bg: #0f172a;
+    --total-text: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 60px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 4px;
+  }
+  p.sub {
+    color: var(--muted);
+    margin: 0 0 24px;
+    font-size: 0.92rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0 0 16px;
+  }
+  .field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    font-size: 0.95rem;
+  }
+  .field .hint {
+    display: block;
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin-top: 2px;
+  }
+  .field input, .field select {
+    width: 130px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    text-align: right;
+    background: #fff;
+    color: var(--text);
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+  .markup-row select {
+    text-align: left;
+    width: 90px;
+  }
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.92rem;
+    padding: 6px 0;
+    color: var(--muted);
+  }
+  .breakdown-row span:last-child {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .breakdown-row.subtotal {
+    border-top: 1px solid var(--border);
+    margin-top: 6px;
+    padding-top: 10px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .total-card {
+    background: var(--total-bg);
+    color: var(--total-text);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .total-card .label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.75;
+  }
+  .total-card .amount {
+    font-size: 1.9rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .reset {
+    display: block;
+    margin: 16px auto 0;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px;
+  }
+  @media (max-width: 380px) {
+    .field { flex-direction: row; }
+    .field input, .field select { width: 110px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Saw Blade Price Calculator</h1>
+  <p class="sub">Enter the plate details and per-unit rates to get a subtotal, then apply markup for the final customer price.</p>
+
+  <div class="card">
+    <h2>Plate</h2>
+    <div class="field">
+      <label for="platePrice">Plate Price ($)
+        <span class="hint">Price per plate</span>
+      </label>
+      <input type="number" id="platePrice" min="0" step="0.01" value="0.00">
+    </div>
+    <div class="field">
+      <label for="plateQty">Plate Quantity</label>
+      <input type="number" id="plateQty" min="0" step="1" value="1">
+    </div>
+    <div class="field">
+      <label for="tipCount">Number of Tips</label>
+      <input type="number" id="tipCount" min="0" step="1" value="0">
+    </div>
+    <div class="field">
+      <label for="strobeCount">Number of Carbide Strobes
+        <span class="hint">0 if the blade has none</span>
+      </label>
+      <input type="number" id="strobeCount" min="0" step="1" value="0">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Rates</h2>
+    <div class="field">
+      <label for="tipRate">Rate per Tip ($)
+        <span class="hint">Cost added per carbide tip</span>
+      </label>
+      <input type="number" id="tipRate" min="0" step="0.01" value="0.00">
+    </div>
+    <div class="field">
+      <label for="strobeRate">Rate per Strobe ($)
+        <span class="hint">Cost added per carbide strobe strip</span>
+      </label>
+      <input type="number" id="strobeRate" min="0" step="0.01" value="0.00">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Breakdown</h2>
+    <div class="breakdown-row"><span>Plate cost (price × qty)</span><span id="bdPlate">$0.00</span></div>
+    <div class="breakdown-row"><span>Tips cost (count × rate)</span><span id="bdTips">$0.00</span></div>
+    <div class="breakdown-row"><span>Strobes cost (count × rate)</span><span id="bdStrobes">$0.00</span></div>
+    <div class="breakdown-row subtotal"><span>Subtotal</span><span id="bdSubtotal">$0.00</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Markup</h2>
+    <div class="field markup-row">
+      <label for="markupType">Apply as</label>
+      <select id="markupType">
+        <option value="percent">Percent (%)</option>
+        <option value="flat">Flat ($)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="markupValue">Markup value</label>
+      <input type="number" id="markupValue" min="0" step="0.01" value="0">
+    </div>
+    <div class="breakdown-row"><span>Markup amount</span><span id="bdMarkup">$0.00</span></div>
+  </div>
+
+  <div class="total-card">
+    <span class="label">Final Price</span>
+    <span class="amount" id="finalPrice">$0.00</span>
+  </div>
+
+  <button class="reset" id="resetBtn">Reset all fields</button>
+</div>
+
+<script>
+(function () {
+  const el = {
+    platePrice: document.getElementById("platePrice"),
+    plateQty: document.getElementById("plateQty"),
+    tipCount: document.getElementById("tipCount"),
+    strobeCount: document.getElementById("strobeCount"),
+    tipRate: document.getElementById("tipRate"),
+    strobeRate: document.getElementById("strobeRate"),
+    markupType: document.getElementById("markupType"),
+    markupValue: document.getElementById("markupValue"),
+    bdPlate: document.getElementById("bdPlate"),
+    bdTips: document.getElementById("bdTips"),
+    bdStrobes: document.getElementById("bdStrobes"),
+    bdSubtotal: document.getElementById("bdSubtotal"),
+    bdMarkup: document.getElementById("bdMarkup"),
+    finalPrice: document.getElementById("finalPrice"),
+    resetBtn: document.getElementById("resetBtn")
+  };
+
+  const fmt = (n) => "$" + (isFinite(n) ? n : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const num = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+
+  const STORAGE_KEY = "sawBladeCalcRates";
+
+  function loadRates() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      if (saved.tipRate !== undefined) el.tipRate.value = saved.tipRate;
+      if (saved.strobeRate !== undefined) el.strobeRate.value = saved.strobeRate;
+    } catch (e) { /* ignore */ }
+  }
+
+  function saveRates() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        tipRate: el.tipRate.value,
+        strobeRate: el.strobeRate.value
+      }));
+    } catch (e) { /* ignore */ }
+  }
+
+  function calculate() {
+    const plateCost = num(el.platePrice.value) * num(el.plateQty.value);
+    const tipsCost = num(el.tipCount.value) * num(el.tipRate.value);
+    const strobesCost = num(el.strobeCount.value) * num(el.strobeRate.value);
+    const subtotal = plateCost + tipsCost + strobesCost;
+
+    let markupAmount = 0;
+    if (el.markupType.value === "percent") {
+      markupAmount = subtotal * (num(el.markupValue.value) / 100);
+    } else {
+      markupAmount = num(el.markupValue.value);
+    }
+
+    const finalPrice = subtotal + markupAmount;
+
+    el.bdPlate.textContent = fmt(plateCost);
+    el.bdTips.textContent = fmt(tipsCost);
+    el.bdStrobes.textContent = fmt(strobesCost);
+    el.bdSubtotal.textContent = fmt(subtotal);
+    el.bdMarkup.textContent = fmt(markupAmount);
+    el.finalPrice.textContent = fmt(finalPrice);
+
+    saveRates();
+  }
+
+  Object.values(el).forEach((node) => {
+    if (node && (node.tagName === "INPUT" || node.tagName === "SELECT")) {
+      node.addEventListener("input", calculate);
+      node.addEventListener("change", calculate);
+    }
+  });
+
+  el.resetBtn.addEventListener("click", () => {
+    el.platePrice.value = "0.00";
+    el.plateQty.value = 1;
+    el.tipCount.value = 0;
+    el.strobeCount.value = 0;
+    el.tipRate.value = "0.00";
+    el.strobeRate.value = "0.00";
+    el.markupType.value = "percent";
+    el.markupValue.value = 0;
+    calculate();
+  });
+
+  loadRates();
+  calculate();
+})();
+</script>
+</body>
+</html>
